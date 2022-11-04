@@ -10,7 +10,13 @@ fn main() -> io::Result<()> {
         let stdin = io::stdin();
         for maybe_line in stdin.lines() {
             let line = maybe_line?;
-            spawn_with_env(command, var_name, line)?;
+            let exit_status = spawn_with_env(command, var_name, &line)?;
+            if !exit_status.success() {
+                eprintln!(
+                    "shmap: command {:?}, ${}={:?} failed with {}",
+                    command, var_name, line, exit_status
+                );
+            }
         }
     } else {
         panic!("Usage: shmap var_name 'command containing $var_name'");
@@ -21,7 +27,7 @@ fn main() -> io::Result<()> {
 fn spawn_with_env(
     command: &String,
     var_name: &String,
-    value: String,
+    value: &String,
 ) -> Result<ExitStatus, std::io::Error> {
     Command::new("/bin/sh")
         .arg("-c")
